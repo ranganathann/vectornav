@@ -1,0 +1,7 @@
+compensated_imu_publisher:
+  ros__parameters:
+    # Publishing options
+    publish_orientation: true
+    publish_angular_velocity: true
+    publish_linear_acceleration: true
+    frame_id: "vectornav" 

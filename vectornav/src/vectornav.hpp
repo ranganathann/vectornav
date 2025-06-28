@@ -24,6 +24,7 @@
 #include <vectornav_msgs/msg/ins_group.hpp>
 #include <vectornav_msgs/msg/time_group.hpp>
 #include "vectornav_msgs/action/mag_cal.hpp"
+#include "vectornav_msgs/srv/tare.hpp"
 #include <geometry_msgs/msg/twist.hpp>
 
 // VectorNav libvncxx
@@ -55,6 +56,9 @@ namespace vectornav {
       const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const MagCal::Goal> goal);
     rclcpp_action::CancelResponse handle_cal_cancel(const std::shared_ptr<MagCalGH> goal_handle);
     void execute_cal(const std::shared_ptr<MagCalGH> goal_handle);
+    void handle_tare_service(
+        const std::shared_ptr<vectornav_msgs::srv::Tare::Request> request,
+        std::shared_ptr<vectornav_msgs::srv::Tare::Response> response);
     /**
     * Callback to take twist message and pass it to VN as velocity aiding 
     *
@@ -140,6 +144,9 @@ namespace vectornav {
     /// Action servers for calibration
     rclcpp_action::Server<vectornav_msgs::action::MagCal>::SharedPtr server_mag_cal_;
     std::thread action_thread_;
+
+    /// Service for tare commands
+    rclcpp::Service<vectornav_msgs::srv::Tare>::SharedPtr tare_service_;
 
   };
 }

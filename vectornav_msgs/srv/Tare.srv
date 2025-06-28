@@ -1,0 +1,8 @@
+# Request
+bool tare_gyro         # If true, tare the gyroscope
+bool tare_accel        # If true, tare the accelerometer
+bool tare_mag          # If true, tare the magnetometer
+---
+# Response
+bool success           # Whether the operation was successful
+string message         # Status message 

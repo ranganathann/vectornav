@@ -1,0 +1,9 @@
+# Request
+bool reset_reference    # If true, reset the reference orientation
+bool tare_gyro         # If true, send tare command to Vectornav
+---
+# Response
+bool success           # Whether the operation was successful
+string message         # Status message
+geometry_msgs/Quaternion reference_orientation  # Current reference orientation
+float32[3] reference_gravity_vector  # Reference gravity vector in sensor frame 

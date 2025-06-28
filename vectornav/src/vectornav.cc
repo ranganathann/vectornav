@@ -167,6 +167,10 @@ Vectornav::Vectornav(const rclcpp::NodeOptions & options) : Node("vectornav", op
     std::bind(&Vectornav::handle_cal_cancel, this, _1),
     std::bind(&Vectornav::handle_cal_accept, this, _1));
 
+  // tare service
+  tare_service_ = create_service<vectornav_msgs::srv::Tare>(
+    "vectornav/tare", std::bind(&Vectornav::handle_tare_service, this, _1, _2));
+
   if (!optimize_serial_communication(port)) {
     RCLCPP_WARN(get_logger(), "time of message delivery may be compromised!");
   }
@@ -484,6 +488,45 @@ void Vectornav::vel_aiding_cb(const geometry_msgs::msg::Twist::SharedPtr msg)
     static_cast<float>(msg->linear.x), static_cast<float>(msg->linear.y),
     static_cast<float>(msg->linear.z)};
   vs_->writeVelocityCompensationMeasurement(velocity, waitForReply);
+}
+
+void Vectornav::handle_tare_service(
+    const std::shared_ptr<vectornav_msgs::srv::Tare::Request> request,
+    std::shared_ptr<vectornav_msgs::srv::Tare::Response> response)
+{
+  try {
+    if (request->tare_gyro) {
+      // Create identity matrix and zero bias for gyro compensation
+      vn::math::mat3f identity_matrix(1, 0, 0, 0, 1, 0, 0, 0, 1);
+      vn::math::vec3f zero_bias(0, 0, 0);
+      vs_->writeGyroCompensation(identity_matrix, zero_bias);
+      RCLCPP_INFO(get_logger(), "Gyroscope tared successfully");
+    }
+    
+    if (request->tare_accel) {
+      // Create identity matrix and zero bias for accelerometer compensation
+      vn::math::mat3f identity_matrix(1, 0, 0, 0, 1, 0, 0, 0, 1);
+      vn::math::vec3f zero_bias(0, 0, 0);
+      vs_->writeAccelerationCompensation(identity_matrix, zero_bias);
+      RCLCPP_INFO(get_logger(), "Accelerometer tared successfully");
+    }
+    
+    if (request->tare_mag) {
+      // Create identity matrix and zero bias for magnetometer compensation
+      vn::math::mat3f identity_matrix(1, 0, 0, 0, 1, 0, 0, 0, 1);
+      vn::math::vec3f zero_bias(0, 0, 0);
+      vs_->writeMagnetometerCompensation(identity_matrix, zero_bias);
+      RCLCPP_INFO(get_logger(), "Magnetometer tared successfully");
+    }
+    
+    response->success = true;
+    response->message = "Tare operation completed successfully";
+    
+  } catch (const std::exception& e) {
+    RCLCPP_ERROR(get_logger(), "Tare operation failed: %s", e.what());
+    response->success = false;
+    response->message = std::string("Tare operation failed: ") + e.what();
+  }
 }
 
 /**

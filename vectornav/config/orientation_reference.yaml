@@ -1,0 +1,6 @@
+orientation_reference:
+  ros__parameters:
+    # Calibration parameters
+    calibration_duration: 3.0      # Duration to collect samples (seconds)
+    calibration_samples: 60        # Number of samples to collect for averaging
+    gravity_magnitude: 9.81        # Expected gravity magnitude (m/s^2) 

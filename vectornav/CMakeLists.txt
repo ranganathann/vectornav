@@ -53,6 +53,15 @@ add_executable(vn_sensor_msgs src/vn_sensor_msgs_node.cc)
 ament_target_dependencies(vn_sensor_msgs rclcpp geometry_msgs vectornav_msgs)
 target_link_libraries(vn_sensor_msgs vn_sensor_msgs_lib)
 
+# orientation reference node
+add_executable(orientation_reference_node src/orientation_reference_node.cc)
+ament_target_dependencies(orientation_reference_node 
+  rclcpp geometry_msgs vectornav_msgs tf2_geometry_msgs)
+
+# compensated imu publisher node
+add_executable(compensated_imu_publisher src/compensated_imu_publisher.cc)
+ament_target_dependencies(compensated_imu_publisher 
+  rclcpp sensor_msgs vectornav_msgs tf2_geometry_msgs)
 
 # install shared libraries with composable nodes into global
 # directory so they can be loaded by other packages
@@ -65,6 +74,8 @@ install(TARGETS
 install(TARGETS
   ${PROJECT_NAME}
   vn_sensor_msgs
+  orientation_reference_node
+  compensated_imu_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY

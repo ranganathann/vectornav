@@ -22,10 +22,35 @@ def generate_launch_description():
         output='screen',
         parameters=[os.path.join(this_dir, 'config', 'vectornav.yaml')])
 
+    # Orientation Reference Node
+    start_orientation_reference_cmd = Node(
+        package='vectornav', 
+        executable='orientation_reference_node',
+        output='screen',
+        parameters=[{
+            'calibration_duration': 3.0,
+            'calibration_samples': 60,
+            'gravity_magnitude': 9.81
+        }])
+
+    # Compensated IMU Publisher Node
+    start_compensated_imu_publisher_cmd = Node(
+        package='vectornav', 
+        executable='compensated_imu_publisher',
+        output='screen',
+        parameters=[{
+            'publish_orientation': True,
+            'publish_angular_velocity': True,
+            'publish_linear_acceleration': True,
+            'frame_id': 'vectornav'
+        }])
+
     # Create the launch description and populate
     ld = LaunchDescription()
 
     ld.add_action(start_vectornav_cmd)
     ld.add_action(start_vectornav_sensor_msgs_cmd)
+    ld.add_action(start_orientation_reference_cmd)
+    ld.add_action(start_compensated_imu_publisher_cmd)
 
     return ld
