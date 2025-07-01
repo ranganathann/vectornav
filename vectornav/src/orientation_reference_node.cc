@@ -3,6 +3,7 @@
 #include <cmath>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "rclcpp/rclcpp.hpp"
 #include "vectornav_msgs/msg/imu_group.hpp"
@@ -67,7 +68,6 @@ private:
                 // Collect acceleration samples for gravity vector calculation
                 if (msg->group_fields & vectornav_msgs::msg::ImuGroup::IMUGROUP_ACCEL) {
                     gravity_samples_.push_back(msg->accel);
-                    calibration_samples_collected_++;
                     
                     if (samples_complete || duration_expired) {
                         calculateReferenceOrientation();
@@ -112,18 +112,8 @@ private:
         avg_gravity.y /= gravity_samples_.size();
         avg_gravity.z /= gravity_samples_.size();
         
-        // Normalize gravity vector to expected magnitude
-        double gravity_norm = std::sqrt(avg_gravity.x * avg_gravity.x + 
-                                       avg_gravity.y * avg_gravity.y + 
-                                       avg_gravity.z * avg_gravity.z);
-        if (gravity_norm > 0.0) {
-            double scale_factor = gravity_magnitude_ / gravity_norm;
-            avg_gravity.x *= scale_factor;
-            avg_gravity.y *= scale_factor;
-            avg_gravity.z *= scale_factor;
-        }
-        
-        // Store reference gravity vector
+        // Store reference gravity vector as-is (no normalization)
+        // The sensor's measured gravity is the "true gravity" from its perspective
         reference_gravity_vector_ = avg_gravity;
         
         // Calculate reference orientation from gravity vector
@@ -148,12 +138,21 @@ private:
         
         reference_orientation_set_ = true;
         
+        // Calculate measured gravity magnitude for logging
+        double measured_gravity_magnitude = std::sqrt(
+            avg_gravity.x * avg_gravity.x + 
+            avg_gravity.y * avg_gravity.y + 
+            avg_gravity.z * avg_gravity.z);
+        
         RCLCPP_INFO(get_logger(), "Reference orientation calculated:");
         RCLCPP_INFO(get_logger(), "  Gravity vector: [%.3f, %.3f, %.3f] (magnitude: %.3f)", 
-                   avg_gravity.x, avg_gravity.y, avg_gravity.z, gravity_magnitude_);
+                   avg_gravity.x, avg_gravity.y, avg_gravity.z, measured_gravity_magnitude);
         RCLCPP_INFO(get_logger(), "  Reference quaternion: [%.3f, %.3f, %.3f, %.3f]",
                    reference_orientation_.x, reference_orientation_.y, 
                    reference_orientation_.z, reference_orientation_.w);
+        
+        // Clear samples to free memory
+        // gravity_samples_.clear();
     }
     
     void publishCompensatedImu(const vectornav_msgs::msg::ImuGroup::SharedPtr msg) {
@@ -172,28 +171,26 @@ private:
         if (msg->group_fields & vectornav_msgs::msg::ImuGroup::IMUGROUP_ACCEL) {
             // Dynamically compensate for gravity using current attitude
             if (attitude_received_) {
-                // Convert current attitude to tf2 quaternion
+                // Convert current attitude to tf2 quaternion and normalize
                 tf2::Quaternion current_q(current_attitude_.x, current_attitude_.y, 
                                         current_attitude_.z, current_attitude_.w);
+                current_q.normalize();
                 
-                // Convert reference orientation to tf2 quaternion (already inverse)
-                tf2::Quaternion reference_q(reference_orientation_.x, reference_orientation_.y,
-                                          reference_orientation_.z, reference_orientation_.w);
+                // Calculate measured gravity magnitude from reference vector
+                double measured_gravity_magnitude = std::sqrt(
+                    reference_gravity_vector_.x * reference_gravity_vector_.x +
+                    reference_gravity_vector_.y * reference_gravity_vector_.y +
+                    reference_gravity_vector_.z * reference_gravity_vector_.z);
                 
-                // Calculate rotation from reference to current orientation
-                // Since reference_q is already inverse, we use: current_q * reference_q
-                tf2::Quaternion rotation_from_ref = current_q * reference_q;
-                
-                // Rotate the reference gravity vector to current orientation
-                tf2::Vector3 ref_gravity(reference_gravity_vector_.x, 
-                                       reference_gravity_vector_.y, 
-                                       reference_gravity_vector_.z);
-                tf2::Vector3 current_gravity = tf2::quatRotate(rotation_from_ref, ref_gravity);
+                // Direct gravity compensation: rotate world gravity to body frame
+                // Use measured gravity magnitude instead of fixed 9.81
+                tf2::Vector3 g_world(0, 0, -measured_gravity_magnitude);
+                tf2::Vector3 g_body = tf2::quatRotate(current_q.inverse(), g_world);
                 
                 // Remove the rotated gravity from acceleration
-                compensated_msg.linear_acceleration.x = msg->accel.x - current_gravity.x();
-                compensated_msg.linear_acceleration.y = msg->accel.y - current_gravity.y();
-                compensated_msg.linear_acceleration.z = msg->accel.z - current_gravity.z();
+                compensated_msg.linear_acceleration.x = msg->accel.x - g_body.x();
+                compensated_msg.linear_acceleration.y = msg->accel.y - g_body.y();
+                compensated_msg.linear_acceleration.z = msg->accel.z - g_body.z();
             } else {
                 // Fallback to static compensation if no current attitude available
                 compensated_msg.linear_acceleration.x = msg->accel.x - reference_gravity_vector_.x;
@@ -218,11 +215,15 @@ private:
         if (attitude_received_) {
             tf2::Quaternion current_q(current_attitude_.x, current_attitude_.y, 
                                     current_attitude_.z, current_attitude_.w);
+            current_q.normalize();
+            
             tf2::Quaternion reference_q(reference_orientation_.x, reference_orientation_.y,
                                       reference_orientation_.z, reference_orientation_.w);
+            reference_q.normalize();
             
-            // Since reference_q is already inverse, rotation_to_ref = reference_q * current_q
-            tf2::Quaternion rotation_to_ref = reference_q * current_q;
+            // Calculate rotation from current to reference frame
+            tf2::Quaternion rotation_to_ref = reference_q * current_q.inverse();
+            rotation_to_ref.normalize();
             
             compensated_msg.rotation_to_reference.x = rotation_to_ref.x();
             compensated_msg.rotation_to_reference.y = rotation_to_ref.y();
