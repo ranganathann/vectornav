@@ -1,0 +1,9 @@
+/**:
+  ros__parameters:
+    # Enable/disable different IMU data types
+    publish_orientation: true
+    publish_angular_velocity: true
+    publish_linear_acceleration: false  # Set to false to avoid gravity in acceleration
+    
+    # Frame ID for the IMU messages
+    frame_id: "vectornav" 

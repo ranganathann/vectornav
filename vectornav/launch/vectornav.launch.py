@@ -14,13 +14,13 @@ def generate_launch_description():
         package='vectornav', 
         executable='vectornav',
         output='screen',
-        parameters=[os.path.join(this_dir, 'config', 'vectornav.yaml')])
+        parameters=[os.path.join(this_dir, 'config', 'vn_100_400hz.yaml')])
     
     start_vectornav_sensor_msgs_cmd = Node(
         package='vectornav', 
         executable='vn_sensor_msgs',
         output='screen',
-        parameters=[os.path.join(this_dir, 'config', 'vectornav.yaml')])
+        parameters=[os.path.join(this_dir, 'config', 'vn_100_400hz.yaml')])
 
     # Orientation Reference Node
     start_orientation_reference_cmd = Node(
@@ -30,7 +30,6 @@ def generate_launch_description():
         parameters=[{
             'calibration_duration': 3.0,
             'calibration_samples': 60,
-            'gravity_magnitude': 9.81
         }])
 
     # Compensated IMU Publisher Node

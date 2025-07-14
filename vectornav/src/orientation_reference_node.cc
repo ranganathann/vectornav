@@ -13,6 +13,7 @@
 #include "vectornav_msgs/srv/tare.hpp"
 #include "geometry_msgs/msg/vector3.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 
 namespace vectornav {
 
@@ -22,11 +23,12 @@ public:
         // Parameters
         calibration_duration_ = declare_parameter<double>("calibration_duration", 3.0);
         calibration_samples_ = declare_parameter<int>("calibration_samples", 60);
-        gravity_magnitude_ = declare_parameter<double>("gravity_magnitude", 9.81);
         
         // Publishers
         compensated_imu_pub_ = create_publisher<vectornav_msgs::msg::CompensatedImu>(
             "vectornav/compensated_imu_raw", 10);
+        
+
         
         // Subscribers
         imu_sub_ = create_subscription<vectornav_msgs::msg::ImuGroup>(
@@ -345,7 +347,6 @@ private:
     // Parameters
     double calibration_duration_;
     int calibration_samples_;
-    double gravity_magnitude_;
     
     // State variables
     bool reference_orientation_set_;

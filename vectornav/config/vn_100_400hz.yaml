@@ -7,7 +7,7 @@ vectornav:
     port: "/dev/ttyUSB0"
     baud: 921600
     adjust_ros_timestamp: True
-    reconnect_ms: 500
+    reconnect_ms: 1000
     # Reference vnproglib-1.2.0.0 headers for enum definitions
     # Async Output Type (ASCII)
     # leave this at zero to select binary format
@@ -34,7 +34,7 @@ vectornav:
     # Binary output register 1
     BO1:
       asyncMode: 1                   # send only on port 1 to save serial bandwidth
-      rateDivisor: 1                 # 800 Hz
+      rateDivisor: 2                 # 800 Hz
       #
       # TimeStartup
       # bit name         meaning
