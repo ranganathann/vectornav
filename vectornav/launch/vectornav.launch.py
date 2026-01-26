@@ -49,7 +49,7 @@ def generate_launch_description():
 
     ld.add_action(start_vectornav_cmd)
     ld.add_action(start_vectornav_sensor_msgs_cmd)
-    ld.add_action(start_orientation_reference_cmd)
+    #ld.add_action(start_orientation_reference_cmd)
     ld.add_action(start_compensated_imu_publisher_cmd)
 
     return ld
