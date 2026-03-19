@@ -8,6 +8,7 @@
  */
 
 #include <chrono>
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <queue>
@@ -137,6 +138,9 @@ Vectornav::Vectornav(const rclcpp::NodeOptions & options) : Node("vectornav", op
   /// Acceleration Compensation (7.2.2)
   /// Gyro Compensation (7.2.3)
   /// Reference Frame Rotation (7.2.4)
+  declare_parameter<double>("reference_frame_rotation.roll_deg", 0.0);
+  declare_parameter<double>("reference_frame_rotation.pitch_deg", 0.0);
+  declare_parameter<double>("reference_frame_rotation.yaw_deg", 0.0);
   /// IMU Filtering (7.2.5)
   /// Delta Theta Velocity Configuration (7.2.6)
   ///
@@ -621,6 +625,33 @@ bool Vectornav::configure_sensor()
     (vn::protocol::uart::ErrorMode)get_parameter("errorMode").as_int()};
 
   vs_->writeCommunicationProtocolControl(configComm);
+
+  const double roll_deg = get_parameter("reference_frame_rotation.roll_deg").as_double();
+  const double pitch_deg = get_parameter("reference_frame_rotation.pitch_deg").as_double();
+  const double yaw_deg = get_parameter("reference_frame_rotation.yaw_deg").as_double();
+  constexpr double kDegToRad = 3.14159265358979323846 / 180.0;
+  const double roll = roll_deg * kDegToRad;
+  const double pitch = pitch_deg * kDegToRad;
+  const double yaw = yaw_deg * kDegToRad;
+
+  const double cr = std::cos(roll);
+  const double sr = std::sin(roll);
+  const double cp = std::cos(pitch);
+  const double sp = std::sin(pitch);
+  const double cy = std::cos(yaw);
+  const double sy = std::sin(yaw);
+
+  vn::math::mat3f reference_rotation = vn::math::mat3f::identity();
+  reference_rotation(0, 0) = static_cast<float>(cy * cp);
+  reference_rotation(0, 1) = static_cast<float>(cy * sp * sr - sy * cr);
+  reference_rotation(0, 2) = static_cast<float>(cy * sp * cr + sy * sr);
+  reference_rotation(1, 0) = static_cast<float>(sy * cp);
+  reference_rotation(1, 1) = static_cast<float>(sy * sp * sr + cy * cr);
+  reference_rotation(1, 2) = static_cast<float>(sy * sp * cr - cy * sr);
+  reference_rotation(2, 0) = static_cast<float>(-sp);
+  reference_rotation(2, 1) = static_cast<float>(cp * sr);
+  reference_rotation(2, 2) = static_cast<float>(cp * cr);
+  vs_->writeReferenceFrameRotation(reference_rotation);
 
   auto boRegs = std::vector<std::string>{"BO1", "BO2", "BO3"};
   auto boConfigs = std::vector<vn::sensors::BinaryOutputRegister>();

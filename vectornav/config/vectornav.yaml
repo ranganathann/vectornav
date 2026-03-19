@@ -24,6 +24,10 @@ vectornav:
     serialChecksum: 1                # CHECKSUMMODE_CHECKSUM
     spiChecksum: 0                   # CHECKSUMMODE_OFF
     errorMode: 1                     # ERRORMODE_SEND
+    reference_frame_rotation:
+      roll_deg: 180.0
+      pitch_deg: 0.0
+      yaw_deg: 0.0
     # Binary output register 1
     BO1:
       asyncMode: 3                   # ASYNCMODE_BOTH
