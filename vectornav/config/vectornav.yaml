@@ -1,7 +1,8 @@
 vectornav:
   ros__parameters:
     port: "/dev/ttyVN100"
-    baud: 115200
+    baud: 921600
+    adjust_ros_timestamp: true
     reconnect_ms: 500
     # Reference vnproglib-1.2.0.0 headers for enum definitions
     # Async Output Type (ASCII)
@@ -30,14 +31,16 @@ vectornav:
       yaw_deg: 0.0
     # Binary output register 1
     BO1:
-      asyncMode: 3                   # ASYNCMODE_BOTH
-      rateDivisor: 40                # 20 Hz
-      commonField: 0x7FFF
+      asyncMode: 1                   # ASYNCMODE_BOTH
+      rateDivisor: 4                # 20 Hz
+      commonField: 0x131
       timeField: 0x0000              # TIMEGROUP_NONE
       imuField: 0x0600               # IMUGROUP_ACCEL | IMUGROUP_ANGULARRATE
       # set gpsField directly in source to enforce or condition
       attitudeField: 0x0004          # ATTITUDEGROUP_QUATERNION
       # set insField directly in source to enforce or condition
+      insField: 0x0000
+      gpsField: 0x0000
       gps2Field: 0x0000              # GPSGROUP_NONE
     # Binary output register 2
     BO2:
