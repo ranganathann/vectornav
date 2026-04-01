@@ -651,7 +651,11 @@ bool Vectornav::configure_sensor()
   reference_rotation(2, 0) = static_cast<float>(-sp);
   reference_rotation(2, 1) = static_cast<float>(cp * sr);
   reference_rotation(2, 2) = static_cast<float>(cp * cr);
-  vs_->writeReferenceFrameRotation(reference_rotation);
+  try {
+    vs_->writeReferenceFrameRotation(reference_rotation);
+  } catch (const std::exception & e) {
+    RCLCPP_WARN(get_logger(), "writeReferenceFrameRotation failed: %s", e.what());
+  }
 
   auto boRegs = std::vector<std::string>{"BO1", "BO2", "BO3"};
   auto boConfigs = std::vector<vn::sensors::BinaryOutputRegister>();

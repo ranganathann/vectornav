@@ -25,7 +25,7 @@ vectornav:
     spiChecksum: 0                   # CHECKSUMMODE_OFF
     errorMode: 1                     # ERRORMODE_SEND
     reference_frame_rotation:
-      roll_deg: 180.0
+      roll_deg: 0.0
       pitch_deg: 0.0
       yaw_deg: 0.0
     # Binary output register 1
@@ -34,9 +34,9 @@ vectornav:
       rateDivisor: 40                # 20 Hz
       commonField: 0x7FFF
       timeField: 0x0000              # TIMEGROUP_NONE
-      imuField: 0x0000               # IMUGROUP_NONE
+      imuField: 0x0600               # IMUGROUP_ACCEL | IMUGROUP_ANGULARRATE
       # set gpsField directly in source to enforce or condition
-      attitudeField: 0x0000          # ATTITUDEGROUP_NONE
+      attitudeField: 0x0004          # ATTITUDEGROUP_QUATERNION
       # set insField directly in source to enforce or condition
       gps2Field: 0x0000              # GPSGROUP_NONE
     # Binary output register 2
@@ -65,7 +65,7 @@ vectornav:
 
 vn_sensor_msgs:
   ros__parameters:
-    use_enu: true
+    use_enu: false
     orientation_covariance: [0.01,  0.0,   0.0,
                             0.0,   0.01,  0.0,
                             0.0,   0.0,   0.01]
